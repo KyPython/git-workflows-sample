@@ -2,6 +2,8 @@
 
 A sample Node.js + TypeScript application designed to demonstrate solid Git workflows and branching strategies.
 
+🌐 **Repository**: [https://github.com/KyPython/git-workflows-sample](https://github.com/KyPython/git-workflows-sample)
+
 ## Overview
 
 This project serves as a practical example of how to structure your Git workflow using a branching model that includes:
