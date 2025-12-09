@@ -1,16 +1,107 @@
-/**
- * Main application entry point
- * A simple hello world application
- */
+#!/usr/bin/env node
 
-function main(): void {
-  console.log("Hello, World!");
-  console.log("Welcome to the Git Workflows Sample Project");
+import { Command } from 'commander';
+import chalk from 'chalk';
+import { createBranch, showBranchStatus, validateBranchName } from './commands/branch';
+import { validateCommitMessage, validateLastCommit, validateStagedCommit } from './commands/commit';
+import { showWorkflowStatus } from './commands/status';
+import { rebaseBranch } from './commands/rebase';
+
+const program = new Command();
+
+program
+  .name('git-workflow')
+  .description('A CLI tool to help developers follow Git workflow best practices')
+  .version('1.0.0');
+
+// Branch commands
+program
+  .command('branch:create')
+  .alias('bc')
+  .description('Create a new feature branch from develop (or specified branch)')
+  .argument('<name>', 'Branch name (e.g., feature/add-logging)')
+  .option('-f, --from <branch>', 'Base branch to create from', 'develop')
+  .action((name: string, options: { from?: string }) => {
+    createBranch({ name, from: options.from });
+  });
+
+program
+  .command('branch:status')
+  .alias('bs')
+  .description('Show current branch status and validation')
+  .action(() => {
+    showBranchStatus();
+  });
+
+program
+  .command('branch:validate')
+  .alias('bv')
+  .description('Validate a branch name')
+  .argument('<name>', 'Branch name to validate')
+  .action((name: string) => {
+    const validation = validateBranchName(name);
+    if (validation.valid) {
+      console.log(chalk.green(`✅ Branch name "${name}" is valid`));
+    } else {
+      console.error(chalk.red(`❌ ${validation.error}`));
+      process.exit(1);
+    }
+  });
+
+// Commit commands
+program
+  .command('commit:check')
+  .alias('cc')
+  .description('Validate the last commit message')
+  .action(() => {
+    validateLastCommit();
+  });
+
+program
+  .command('commit:validate')
+  .alias('cv')
+  .description('Validate a commit message')
+  .argument('<message>', 'Commit message to validate')
+  .action((message: string) => {
+    validateStagedCommit(message);
+  });
+
+// Status commands
+program
+  .command('status')
+  .alias('st')
+  .description('Check if current branch is ready for Pull Request')
+  .action(() => {
+    showWorkflowStatus();
+  });
+
+// Rebase commands
+program
+  .command('rebase')
+  .alias('rb')
+  .description('Rebase current branch onto develop (or specified branch)')
+  .option('-b, --base <branch>', 'Base branch to rebase onto', 'develop')
+  .option('-i, --interactive', 'Interactive rebase', false)
+  .action((options: { base?: string; interactive?: boolean }) => {
+    rebaseBranch(options);
+  });
+
+// Help command enhancement
+program.on('--help', () => {
+  console.log('');
+  console.log(chalk.gray('Examples:'));
+  console.log(chalk.gray('  $ git-workflow branch:create feature/add-logging'));
+  console.log(chalk.gray('  $ git-workflow commit:check'));
+  console.log(chalk.gray('  $ git-workflow status'));
+  console.log(chalk.gray('  $ git-workflow rebase'));
+  console.log('');
+  console.log(chalk.gray('For more information, see GIT_WORKFLOW.md'));
+});
+
+// Parse arguments
+program.parse(process.argv);
+
+// Show help if no command provided
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
 }
-
-if (require.main === module) {
-  main();
-}
-
-export { main };
-
