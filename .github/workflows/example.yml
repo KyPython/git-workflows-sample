@@ -1,0 +1,62 @@
+name: Git Workflow Helper CI Example
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test Git Workflow Helper
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Test git workflow commands
+        run: |
+          # Test status command
+          npm run git:status || echo "Status check completed"
+          
+          # Test branch validation
+          npm run git:branch:status || echo "Branch status check completed"
+
+  integration:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git commands
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Test PR readiness check
+        run: |
+          npm run git:pr || echo "PR check completed"

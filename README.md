@@ -61,12 +61,23 @@ You can also use npm scripts for convenience. Add these to your project's `packa
 }
 ```
 
+**Quick Setup:**
+Copy the scripts from [examples/package.json.scripts.example.json](./examples/package.json.scripts.example.json) to your `package.json`.
+
 Then use them with:
 ```bash
 npm run git:status
 npm run git:pr
 npm run git:sync
 ```
+
+### CI/CD Integration
+
+**GitHub Actions Example:**
+See [.github/workflows/example.yml](./.github/workflows/example.yml) for a complete workflow example that demonstrates:
+- Testing git workflow commands in CI
+- Integration testing on pull requests
+- PR readiness checks
 
 ## Commands
 
