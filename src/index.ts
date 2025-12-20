@@ -6,6 +6,9 @@ import { createBranch, showBranchStatus, validateBranchName } from './commands/b
 import { validateCommitMessage, validateLastCommit, validateStagedCommit } from './commands/commit';
 import { showWorkflowStatus } from './commands/status';
 import { rebaseBranch } from './commands/rebase';
+import { syncBranch } from './commands/sync';
+import { preparePR } from './commands/pr';
+import { showCommitTemplate } from './commands/template';
 
 const program = new Command();
 
@@ -80,10 +83,38 @@ program
   .command('rebase')
   .alias('rb')
   .description('Rebase current branch onto develop (or specified branch)')
-  .option('-b, --base <branch>', 'Base branch to rebase onto', 'develop')
+  .option('-b, --base <branch>', 'Base branch to rebase onto (auto-detected if not specified)')
   .option('-i, --interactive', 'Interactive rebase', false)
   .action((options: { base?: string; interactive?: boolean }) => {
     rebaseBranch(options);
+  });
+
+// Sync commands
+program
+  .command('sync')
+  .alias('sy')
+  .description('Sync current branch - fetch and rebase onto integration branch')
+  .option('-b, --base <branch>', 'Base branch to sync with (auto-detected if not specified)')
+  .option('--no-rebase', 'Skip rebase, only fetch and pull', false)
+  .action((options: { base?: string; rebase?: boolean }) => {
+    syncBranch(options);
+  });
+
+// PR commands
+program
+  .command('pr')
+  .description('Run comprehensive checks to prepare for Pull Request')
+  .action(() => {
+    preparePR();
+  });
+
+// Template commands
+program
+  .command('template')
+  .alias('tpl')
+  .description('Show commit message template')
+  .action(() => {
+    showCommitTemplate();
   });
 
 // Help command enhancement
@@ -91,9 +122,10 @@ program.on('--help', () => {
   console.log('');
   console.log(chalk.gray('Examples:'));
   console.log(chalk.gray('  $ git-workflow branch:create feature/add-logging'));
+  console.log(chalk.gray('  $ git-workflow sync'));
+  console.log(chalk.gray('  $ git-workflow pr'));
   console.log(chalk.gray('  $ git-workflow commit:check'));
-  console.log(chalk.gray('  $ git-workflow status'));
-  console.log(chalk.gray('  $ git-workflow rebase'));
+  console.log(chalk.gray('  $ git-workflow template'));
   console.log('');
   console.log(chalk.gray('For more information, see GIT_WORKFLOW.md'));
 });

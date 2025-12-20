@@ -1,0 +1,30 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+
+# Types:
+#   feat:     A new feature
+#   fix:      A bug fix
+#   docs:     Documentation only changes
+#   style:    Changes that do not affect the meaning of the code
+#   refactor: A code change that neither fixes a bug nor adds a feature
+#   perf:     A code change that improves performance
+#   test:     Adding missing tests or correcting existing tests
+#   chore:    Changes to the build process or auxiliary tools
+#   ci:       Changes to CI configuration files and scripts
+#   build:    Changes that affect the build system or external dependencies
+#   revert:   Reverts a previous commit
+#
+# Scope: optional, can be anything specifying the scope of the commit
+# Subject: short summary (50 chars or less, imperative mood)
+# Body: optional, longer explanation (wrap at 72 chars)
+# Footer: optional, for breaking changes or issue references
+#
+# Examples:
+#   feat(auth): add user login functionality
+#   fix(api): correct user endpoint response format
+#   docs: update README with installation instructions
+#   refactor(utils): simplify date formatting logic
+

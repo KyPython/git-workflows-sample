@@ -42,6 +42,32 @@ git-workflow --help
 gwf --help
 ```
 
+### NPM Scripts Integration
+
+You can also use npm scripts for convenience. Add these to your project's `package.json`:
+
+```json
+{
+  "scripts": {
+    "git:status": "git-workflow status",
+    "git:branch:create": "git-workflow branch:create",
+    "git:branch:status": "git-workflow branch:status",
+    "git:commit:check": "git-workflow commit:check",
+    "git:sync": "git-workflow sync",
+    "git:pr": "git-workflow pr",
+    "git:rebase": "git-workflow rebase",
+    "git:template": "git-workflow template"
+  }
+}
+```
+
+Then use them with:
+```bash
+npm run git:status
+npm run git:pr
+npm run git:sync
+```
+
 ## Commands
 
 ### Branch Management
@@ -156,8 +182,9 @@ gwf rb --interactive
 ### Complete Feature Workflow
 
 ```bash
-# 1. Create a feature branch
+# 1. Create a feature branch (auto-detects base branch)
 gwf bc feature/add-user-authentication
+# or with npm: npm run git:branch:create -- feature/add-user-authentication
 
 # 2. Make your changes and commit
 git add .
@@ -165,12 +192,15 @@ git commit -m "feat(auth): add user authentication"
 
 # 3. Validate your commit
 gwf cc
+# or: npm run git:commit:check
 
-# 4. Check if ready for PR
-gwf st
+# 4. Sync with remote (fetch and rebase)
+gwf sync
+# or: npm run git:sync
 
-# 5. If branch is behind, rebase
-gwf rb
+# 5. Check if ready for PR (comprehensive check)
+gwf pr
+# or: npm run git:pr
 
 # 6. Push and create PR
 git push origin feature/add-user-authentication
@@ -207,6 +237,7 @@ git commit -m "feat(api): implement user endpoint"
 ## Features
 
 ### 🎯 Branch Management
+- **Auto-detection** of base branch (main/master/develop)
 - Automatic branch creation with validation
 - Ensures proper naming conventions
 - Fetches latest changes before branching
@@ -224,11 +255,37 @@ git commit -m "feat(api): implement user endpoint"
 - Checks branch sync status
 - Validates commit messages
 
-### 🔄 Rebase Safety
+### 🔄 Rebase & Sync
+- **Sync command**: Fetch and rebase in one step
+- Auto-detects integration branch
 - Checks for uncommitted changes
 - Validates base branch exists
 - Provides conflict resolution guidance
 - Safe force-push warnings
+
+### 📋 PR Preparation
+- **Comprehensive PR check**: Runs all validations at once
+- Validates branch status, commits, and PR readiness
+- Provides actionable feedback
+- Single command before creating PR
+
+## CI/CD Integration
+
+The tool works seamlessly in CI environments. For GitHub Actions:
+
+```yaml
+- name: Check PR readiness
+  run: |
+    npm install
+    npm run build
+    npm run git:pr || echo "⚠️ PR checks failed (continuing)"
+```
+
+The tool:
+- ✅ Works without interactive prompts
+- ✅ Fails gracefully (use `|| true` for optional checks)
+- ✅ Provides clear exit codes for CI
+- ✅ Supports `CI=true` environment variable pattern
 
 ## Development
 

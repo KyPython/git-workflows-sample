@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import chalk from 'chalk';
+import { getIntegrationBranch, branchExists, isGitRepository } from '../utils/git';
 
 export interface BranchOptions {
   name: string;
@@ -37,7 +38,9 @@ export function validateBranchName(name: string): { valid: boolean; error?: stri
  * Creates a new feature branch from develop (or specified branch)
  */
 export function createBranch(options: BranchOptions): void {
-  const { name, from = 'develop' } = options;
+  // Auto-detect base branch if not specified
+  const detectedBranch = getIntegrationBranch();
+  const { name, from } = { from: detectedBranch, ...options };
 
   // Validate branch name
   const validation = validateBranchName(name);
@@ -46,20 +49,16 @@ export function createBranch(options: BranchOptions): void {
     process.exit(1);
   }
 
-  try {
-    // Check if we're in a git repository
-    execSync('git rev-parse --git-dir', { stdio: 'ignore' });
-  } catch {
+  if (!isGitRepository()) {
     console.error(chalk.red('❌ Error:'), 'Not in a Git repository');
     process.exit(1);
   }
 
   try {
     // Check if branch already exists
-    const branches = execSync('git branch --list', { encoding: 'utf-8' });
-    const remoteBranches = execSync('git branch -r --list', { encoding: 'utf-8' });
+    const exists = branchExists(name);
     
-    if (branches.includes(name) || remoteBranches.includes(`origin/${name}`)) {
+    if (exists.local || exists.remote) {
       console.error(chalk.red('❌ Error:'), `Branch "${name}" already exists`);
       process.exit(1);
     }
@@ -69,7 +68,7 @@ export function createBranch(options: BranchOptions): void {
     execSync('git fetch origin', { stdio: 'inherit' });
 
     // Checkout base branch and update it
-    console.log(chalk.blue(`📂 Switching to ${from}...`));
+    console.log(chalk.blue(`📂 Switching to ${from} (detected integration branch)...`));
     try {
       execSync(`git checkout ${from}`, { stdio: 'inherit' });
       execSync(`git pull origin ${from}`, { stdio: 'inherit' });

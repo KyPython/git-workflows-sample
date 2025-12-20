@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import chalk from 'chalk';
+import { getIntegrationBranch, isGitRepository, hasUncommittedChanges } from '../utils/git';
 
 export interface RebaseOptions {
   base?: string;
@@ -10,7 +11,14 @@ export interface RebaseOptions {
  * Helps with rebasing current branch onto base branch
  */
 export function rebaseBranch(options: RebaseOptions = {}): void {
-  const { base = 'develop', interactive = false } = options;
+  if (!isGitRepository()) {
+    console.error(chalk.red('❌ Error:'), 'Not in a Git repository');
+    process.exit(1);
+  }
+
+  // Auto-detect base branch if not specified
+  const detectedBranch = getIntegrationBranch();
+  const { base, interactive = false } = { base: detectedBranch, ...options };
 
   try {
     execSync('git rev-parse --git-dir', { stdio: 'ignore' });
@@ -23,8 +31,7 @@ export function rebaseBranch(options: RebaseOptions = {}): void {
     const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
     
     // Check for uncommitted changes
-    const statusOutput = execSync('git status --porcelain', { encoding: 'utf-8' });
-    if (statusOutput.trim().length > 0) {
+    if (hasUncommittedChanges()) {
       console.error(chalk.red('❌ Error:'), 'You have uncommitted changes. Commit or stash them first.');
       console.log(chalk.gray('   Stash: git stash'));
       console.log(chalk.gray('   Or commit: git commit -am "your message"'));

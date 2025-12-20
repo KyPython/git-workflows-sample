@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import chalk from 'chalk';
+import { getIntegrationBranch, detectDefaultBranch } from '../utils/git';
 
 export interface WorkflowStatus {
   readyForPR: boolean;
@@ -59,14 +60,15 @@ export function checkPRReadiness(): WorkflowStatus {
       status.warnings.push('No remote tracking branch. Use: git push -u origin <branch>');
     }
 
-    // Check commit messages
+    // Check commit messages - auto-detect integration branch
+    const integrationBranch = getIntegrationBranch();
     try {
-      const commits = execSync(`git log origin/develop..HEAD --oneline --no-merges`, { encoding: 'utf-8' });
+      const commits = execSync(`git log origin/${integrationBranch}..HEAD --oneline --no-merges`, { encoding: 'utf-8' });
       if (commits.trim().length === 0) {
-        status.warnings.push('No commits ahead of develop. Make sure you have commits to merge.');
+        status.warnings.push(`No commits ahead of ${integrationBranch}. Make sure you have commits to merge.`);
       } else {
         const commitCount = commits.trim().split('\n').length;
-        status.info.push(`${commitCount} commit(s) ahead of develop`);
+        status.info.push(`${commitCount} commit(s) ahead of ${integrationBranch}`);
         
         // Check if commits follow conventional commits (basic check)
         const invalidCommits = commits.split('\n').filter(line => {
@@ -75,16 +77,17 @@ export function checkPRReadiness(): WorkflowStatus {
         });
         
         if (invalidCommits.length > 0) {
-          status.warnings.push('Some commits may not follow Conventional Commits format. Consider: git-workflow commit check');
+          status.warnings.push('Some commits may not follow Conventional Commits format. Consider: git-workflow commit:check');
         }
       }
     } catch {
-      // develop might not exist, check against main
+      // Integration branch might not exist, try default branch
       try {
-        const commits = execSync(`git log origin/main..HEAD --oneline --no-merges`, { encoding: 'utf-8' });
+        const defaultBranch = detectDefaultBranch();
+        const commits = execSync(`git log origin/${defaultBranch}..HEAD --oneline --no-merges`, { encoding: 'utf-8' });
         if (commits.trim().length > 0) {
           const commitCount = commits.trim().split('\n').length;
-          status.info.push(`${commitCount} commit(s) ahead of main`);
+          status.info.push(`${commitCount} commit(s) ahead of ${defaultBranch}`);
         }
       } catch {
         status.warnings.push('Could not determine commits ahead of base branch');
@@ -93,15 +96,15 @@ export function checkPRReadiness(): WorkflowStatus {
 
     // Check if branch needs rebase
     try {
-      execSync('git fetch origin develop', { stdio: 'ignore' });
-      const mergeBase = execSync('git merge-base HEAD origin/develop', { encoding: 'utf-8' }).trim();
-      const developHead = execSync('git rev-parse origin/develop', { encoding: 'utf-8' }).trim();
+      execSync(`git fetch origin ${integrationBranch}`, { stdio: 'ignore' });
+      const mergeBase = execSync(`git merge-base HEAD origin/${integrationBranch}`, { encoding: 'utf-8' }).trim();
+      const integrationHead = execSync(`git rev-parse origin/${integrationBranch}`, { encoding: 'utf-8' }).trim();
       
-      if (mergeBase !== developHead) {
-        status.warnings.push('Branch is behind develop. Consider rebasing: git rebase origin/develop');
+      if (mergeBase !== integrationHead) {
+        status.warnings.push(`Branch is behind ${integrationBranch}. Consider syncing: git-workflow sync`);
       }
     } catch {
-      // develop might not exist
+      // Integration branch might not exist
     }
 
   } catch (error: any) {
